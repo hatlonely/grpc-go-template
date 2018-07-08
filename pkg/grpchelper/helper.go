@@ -26,21 +26,26 @@ type hystrixOption struct {
 // NewRPCHelper create a new RPC Helper
 func NewRPCHelper(config *viper.Viper) *RPCHelper {
 	limiterOpt := &limiterOption{}
-	config.Sub("limiter").Unmarshal(limiterOpt)
-	hystrixOpt := &hystrixOption{}
-	config.Sub("hystrix").Unmarshal(hystrixOpt)
+	var limiter *rate.Limiter
+	if sub := config.Sub("limiter"); sub != nil {
+		sub.Unmarshal(limiterOpt)
+		limiter = rate.NewLimiter(rate.Every(limiterOpt.Interval), limiterOpt.Buckets)
+	}
 
-	limiter := rate.NewLimiter(rate.Every(limiterOpt.Interval), limiterOpt.Buckets)
-	hystrix.ConfigureCommand(
-		hystrixOpt.Command,
-		hystrix.CommandConfig{
-			Timeout:                int(hystrixOpt.Timeout / time.Millisecond),
-			MaxConcurrentRequests:  hystrixOpt.MaxConcurrentRequests,
-			RequestVolumeThreshold: hystrixOpt.RequestVolumeThreshold,
-			ErrorPercentThreshold:  int(hystrixOpt.ErrorPercentThreshold * 100.0),
-			SleepWindow:            int(hystrixOpt.SleepWindow / time.Millisecond),
-		},
-	)
+	hystrixOpt := &hystrixOption{}
+	if sub := config.Sub("hystrix"); sub != nil {
+		sub.Unmarshal(hystrixOpt)
+		hystrix.ConfigureCommand(
+			hystrixOpt.Command,
+			hystrix.CommandConfig{
+				Timeout:                int(hystrixOpt.Timeout / time.Millisecond),
+				MaxConcurrentRequests:  hystrixOpt.MaxConcurrentRequests,
+				RequestVolumeThreshold: hystrixOpt.RequestVolumeThreshold,
+				ErrorPercentThreshold:  int(hystrixOpt.ErrorPercentThreshold * 100.0),
+				SleepWindow:            int(hystrixOpt.SleepWindow / time.Millisecond),
+			},
+		)
+	}
 	return &RPCHelper{
 		limiter: limiter,
 		command: hystrixOpt.Command,
@@ -67,8 +72,10 @@ func (h *RPCHelper) Do(request interface{}) (interface{}, error, error) {
 	var err error
 	var callErr error
 
-	if err := h.limiter.Wait(context.Background()); err != nil {
-		return nil, nil, err
+	if h.limiter != nil {
+		if err := h.limiter.Wait(context.Background()); err != nil {
+			return nil, nil, err
+		}
 	}
 
 	if h.fallback == nil {
