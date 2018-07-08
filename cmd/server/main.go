@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net"
-	"os"
 
 	"github.com/hatlonely/grpc-go-template/api/addapi"
 	"github.com/hatlonely/grpc-go-template/api/echoapi"
@@ -13,7 +12,6 @@ import (
 	"github.com/hatlonely/grpc-go-template/pkg/grpchelper"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 	_ "github.com/spf13/viper/remote"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -28,21 +26,9 @@ func main() {
 	logrus.SetFormatter(&logrus.JSONFormatter{})
 
 	// read configs from consul or local
-	config := viper.New()
-	if *host != "" {
-		config.AddRemoteProvider("consul", *host, *conf)
-		config.SetConfigType("json")
-		if err := config.ReadRemoteConfig(); err != nil {
-			panic(err)
-		}
-	} else {
-		fp, err := os.Open(*conf)
-		if err != nil {
-			panic(err)
-		}
-		if err := config.ReadConfig(fp); err != nil {
-			panic(err)
-		}
+	config, err := grpchelper.NewConfig(*host, *conf)
+	if err != nil {
+		panic(err)
 	}
 	config.BindPFlags(pflag.CommandLine)
 

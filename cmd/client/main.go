@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"os"
 	"time"
 
 	"github.com/afex/hystrix-go/hystrix"
@@ -12,7 +11,6 @@ import (
 	"github.com/hatlonely/grpc-go-template/pkg/grpchelper"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 	_ "github.com/spf13/viper/remote"
 	"golang.org/x/time/rate"
 )
@@ -22,21 +20,9 @@ func main() {
 	host := pflag.StringP("host", "h", "127.0.0.1:8500", "consul host address")
 	pflag.Parse()
 
-	config := viper.New()
-	if *host != "" {
-		config.AddRemoteProvider("consul", *host, *conf)
-		config.SetConfigType("json")
-		if err := config.ReadRemoteConfig(); err != nil {
-			panic(err)
-		}
-	} else {
-		fp, err := os.Open(*conf)
-		if err != nil {
-			panic(err)
-		}
-		if err := config.ReadConfig(fp); err != nil {
-			panic(err)
-		}
+	config, err := grpchelper.NewConfig(*host, *conf)
+	if err != nil {
+		panic(err)
 	}
 	config.BindPFlags(pflag.CommandLine)
 
@@ -73,8 +59,9 @@ func main() {
 		var response *addapi.Response
 		err := hystrix.Do("addservice", func() error {
 			var err error
-			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(50*time.Millisecond))
-			defer cancel()
+			// ctx, cancel := context.WithTimeout(context.Background(), time.Duration(50*time.Millisecond))
+			// defer cancel()
+			ctx := context.Background()
 			response, err = client.Do(ctx, request)
 			return err
 		}, func(err error) error {
