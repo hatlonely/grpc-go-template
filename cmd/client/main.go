@@ -39,11 +39,12 @@ func main() {
 	defer conn.Close()
 
 	client := addapi.NewServiceClient(conn)
+	time.Sleep(time.Millisecond * 200)
 
 	// init helper
-	helper := grpchelper.NewRPCHelper(config.Sub("helper"))
+	addHelper := grpchelper.NewRPCHelper(config.Sub("helper"))
 
-	helper.SetCallback(
+	addHelper.SetCallback(
 		func(requestI interface{}) (interface{}, error) {
 			return client.Do(context.Background(), requestI.(*addapi.Request))
 		},
@@ -55,20 +56,19 @@ func main() {
 		},
 	)
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 100; i++ {
 		request := &addapi.Request{
 			A: int64(rand.Intn(1000)),
 			B: int64(rand.Intn(1000)),
 		}
 
-		now := time.Now()
-		response, callErr, err := helper.Do(request)
+		response, info, err := addHelper.Do(request)
 		logrus.WithFields(logrus.Fields{
 			"request":  request,
 			"response": response,
-			"callErr":  callErr,
 			"err":      err,
-			"costUs":   int(time.Since(now) / time.Microsecond),
+			"costUs":   int(info.Cost / time.Microsecond),
+			"callErr":  info.CallErr,
 		}).Info()
 	}
 }

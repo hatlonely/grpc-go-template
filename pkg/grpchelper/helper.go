@@ -52,6 +52,12 @@ func NewRPCHelper(config *viper.Viper) *RPCHelper {
 	}
 }
 
+// RPCDoInfo info
+type RPCDoInfo struct {
+	CallErr error
+	Cost    time.Duration
+}
+
 // RPCHelper helper
 type RPCHelper struct {
 	limiter  *rate.Limiter
@@ -67,10 +73,10 @@ func (h *RPCHelper) SetCallback(callback, fallback RPCFunc) {
 }
 
 // Do do request
-func (h *RPCHelper) Do(request interface{}) (interface{}, error, error) {
+func (h *RPCHelper) Do(request interface{}) (interface{}, *RPCDoInfo, error) {
 	var response interface{}
 	var err error
-	var callErr error
+	info := &RPCDoInfo{}
 
 	if h.limiter != nil {
 		if err := h.limiter.Wait(context.Background()); err != nil {
@@ -80,23 +86,27 @@ func (h *RPCHelper) Do(request interface{}) (interface{}, error, error) {
 
 	if h.fallback == nil {
 		err = hystrix.Do(h.command, func() error {
+			now := time.Now()
 			response, err = h.callback(request)
-			callErr = err
+			info.CallErr = err
+			info.Cost = time.Since(now)
 			return err
 		}, nil)
 	} else {
 		err = hystrix.Do(h.command, func() error {
+			now := time.Now()
 			response, err = h.callback(request)
-			callErr = err
+			info.CallErr = err
+			info.Cost = time.Since(now)
 			return err
 		}, func(inErr error) error {
-			callErr = inErr
+			info.CallErr = inErr
 			response, err = h.fallback(request)
 			return err
 		})
 	}
 
-	return response, callErr, err
+	return response, info, err
 }
 
 // RPCFunc helper function
