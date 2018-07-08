@@ -8,6 +8,7 @@ function load() {
 
 function main() {
     load configs/server/server.json grpc-go-template/configs/server/server.json
+    load configs/client/client.json grpc-go-template/configs/client/client.json
 }
 
 main

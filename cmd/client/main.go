@@ -4,37 +4,45 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/afex/hystrix-go/hystrix"
-	"github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/hatlonely/grpc-go-template/api/addapi"
 	"github.com/hatlonely/grpc-go-template/pkg/grpchelper"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
+	_ "github.com/spf13/viper/remote"
 	"golang.org/x/time/rate"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 )
 
 func main() {
+	conf := pflag.StringP("config", "c", "grpc-go-template/configs/client/client.json", "config filename")
+	host := pflag.StringP("host", "h", "127.0.0.1:8500", "consul host address")
+	pflag.Parse()
+
+	config := viper.New()
+	if *host != "" {
+		config.AddRemoteProvider("consul", *host, *conf)
+		config.SetConfigType("json")
+		if err := config.ReadRemoteConfig(); err != nil {
+			panic(err)
+		}
+	} else {
+		fp, err := os.Open(*conf)
+		if err != nil {
+			panic(err)
+		}
+		if err := config.ReadConfig(fp); err != nil {
+			panic(err)
+		}
+	}
+	config.BindPFlags(pflag.CommandLine)
+
 	logrus.SetFormatter(&logrus.JSONFormatter{})
 
-	conn, err := grpc.Dial(
-		"",
-		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(
-			grpc_retry.UnaryClientInterceptor(
-				grpc_retry.WithBackoff(grpc_retry.BackoffLinear(time.Duration(1)*time.Millisecond)),
-				grpc_retry.WithMax(3),
-				grpc_retry.WithPerRetryTimeout(time.Duration(5)*time.Millisecond),
-				grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable, codes.DeadlineExceeded),
-			),
-		),
-		grpc.WithBalancer(grpc.RoundRobin(grpchelper.NewConsulResolver(
-			"127.0.0.1:8500", "grpc.health.v1.grpc-go-template",
-		))),
-	)
-
+	conn, err := grpchelper.NewConn(config.Sub("conn"))
 	if err != nil {
 		fmt.Printf("dial failed. err: [%v]\n", err)
 		return

@@ -1,1 +1,18 @@
-{}
+{
+    "conn": {
+        "retry": {
+            "waitBetween": "100ms",
+            "retries": 3,
+            "timeout": "20ms",
+            "codes": [
+                4,
+                8,
+                14
+            ]
+        },
+        "balancer": {
+            "consul": "127.0.0.1:8500",
+            "service": "grpc.health.v1.grpc-go-template"
+        }
+    }
+}
