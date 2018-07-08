@@ -2,7 +2,7 @@
     "conn": {
         "retry": {
             "waitBetween": "100ms",
-            "retries": 3,
+            "retries": 1,
             "timeout": "20ms",
             "codes": [
                 4,
@@ -13,6 +13,20 @@
         "balancer": {
             "consul": "127.0.0.1:8500",
             "service": "grpc-go-template"
+        }
+    },
+    "helper": {
+        "limiter": {
+            "interval": "800ms",
+            "buckets": 1
+        },
+        "hystrix": {
+            "command": "grpc-go-template",
+            "timeout": "200ms",
+            "maxConcurrentRequests": 100,
+            "requestVolumeThreshold": 4,
+            "errorPercentThreshold": 0.25,
+            "sleepWindow": "1s"
         }
     }
 }
