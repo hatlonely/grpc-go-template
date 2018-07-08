@@ -10,7 +10,7 @@ import (
 	"github.com/hatlonely/grpc-go-template/internal/add"
 	"github.com/hatlonely/grpc-go-template/internal/echo"
 	"github.com/hatlonely/grpc-go-template/internal/health"
-	"github.com/hatlonely/grpc-go-template/pkg/sr"
+	"github.com/hatlonely/grpc-go-template/pkg/grpchelper"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -47,7 +47,7 @@ func main() {
 	config.BindPFlags(pflag.CommandLine)
 
 	// register service to consul
-	register := sr.NewConsulRegister()
+	register := grpchelper.NewConsulRegister()
 	config.Sub("register").Unmarshal(register)
 	register.Port = config.GetInt("register.port")
 	if err := register.Register(); err != nil {

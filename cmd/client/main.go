@@ -9,7 +9,7 @@ import (
 	"github.com/afex/hystrix-go/hystrix"
 	"github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/hatlonely/grpc-go-template/api/addapi"
-	"github.com/hatlonely/grpc-go-template/pkg/lb"
+	"github.com/hatlonely/grpc-go-template/pkg/grpchelper"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
@@ -30,7 +30,7 @@ func main() {
 				grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable, codes.DeadlineExceeded),
 			),
 		),
-		grpc.WithBalancer(grpc.RoundRobin(lb.NewConsulResolver(
+		grpc.WithBalancer(grpc.RoundRobin(grpchelper.NewConsulResolver(
 			"127.0.0.1:8500", "grpc.health.v1.grpc-go-template",
 		))),
 	)
