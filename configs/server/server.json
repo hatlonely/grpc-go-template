@@ -1,0 +1,14 @@
+{
+    "register": {
+        "address": "127.0.0.1:8500",
+        "service": "grpc-go-template",
+        "tag": [
+            "add",
+            "echo",
+            "health"
+        ],
+        "port": 3000,
+        "deregisterCriticalServiceAfter": "1m",
+        "interval": "10s"
+    }
+}
