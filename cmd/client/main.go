@@ -20,6 +20,7 @@ func main() {
 	host := pflag.StringP("host", "h", "127.0.0.1:8500", "consul host address")
 	pflag.Parse()
 
+	// read configs from consul or local
 	config, err := grpchelper.NewConfig(*host, *conf)
 	if err != nil {
 		panic(err)
@@ -28,6 +29,7 @@ func main() {
 
 	logrus.SetFormatter(&logrus.JSONFormatter{})
 
+	// create connection
 	conn, err := grpchelper.NewConn(config.Sub("conn"))
 	if err != nil {
 		fmt.Printf("dial failed. err: [%v]\n", err)
@@ -59,8 +61,6 @@ func main() {
 		var response *addapi.Response
 		err := hystrix.Do("addservice", func() error {
 			var err error
-			// ctx, cancel := context.WithTimeout(context.Background(), time.Duration(50*time.Millisecond))
-			// defer cancel()
 			ctx := context.Background()
 			response, err = client.Do(ctx, request)
 			return err
