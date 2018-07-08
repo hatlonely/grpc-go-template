@@ -2,7 +2,7 @@
     "conn": {
         "retry": {
             "waitBetween": "100ms",
-            "retries": 1,
+            "retries": 3,
             "timeout": "20ms",
             "codes": [
                 4,
@@ -22,7 +22,7 @@
         },
         "hystrix": {
             "command": "grpc-go-template",
-            "timeout": "200ms",
+            "timeout": "400ms",
             "maxConcurrentRequests": 100,
             "requestVolumeThreshold": 4,
             "errorPercentThreshold": 0.25,
