@@ -43,7 +43,7 @@ func (r *ConsulRegister) Register() error {
 	IP := localIP()
 	reg := &api.AgentServiceRegistration{
 		ID:      fmt.Sprintf("%v-%v-%v", r.Service, IP, r.Port), // 服务节点的名称
-		Name:    fmt.Sprintf("grpc.health.v1.%v", r.Service),    // 服务名称
+		Name:    fmt.Sprintf("%v", r.Service),                   // 服务名称
 		Tags:    r.Tag,                                          // tag，可以为空
 		Port:    r.Port,                                         // 服务端口
 		Address: IP,                                             // 服务 IP

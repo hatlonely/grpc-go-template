@@ -59,7 +59,7 @@ func main() {
 			B: int64(rand.Intn(1000)),
 		}
 		var response *addapi.Response
-		err := hystrix.Do("addservice", func() error {
+		err := hystrix.Do("grpc-go-template", func() error {
 			var err error
 			ctx := context.Background()
 			response, err = client.Do(ctx, request)
