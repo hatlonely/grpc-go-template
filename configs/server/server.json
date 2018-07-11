@@ -10,5 +10,33 @@
         "port": 3000,
         "deregisterCriticalServiceAfter": "1m",
         "interval": "10s"
+    },
+    "logger": {
+        "logger": {
+            "log": {
+                "file": {
+                    "filename": "log/server.log"
+                },
+                "elasticsearch": {
+                    "index": "server_log",
+                    "client": "hooks.es_client"
+                }
+            },
+            "err": {
+                "file": {
+                    "filename": "log/server.err"
+                },
+                "elasticsearch": {
+                    "index": "server_err",
+                    "client": "hooks.es_client"
+                }
+            }
+        },
+        "hooks": {
+            "es_client": {
+                "type": "elasticsearch",
+                "address": "http://127.0.0.1:9200"
+            }
+        }
     }
 }

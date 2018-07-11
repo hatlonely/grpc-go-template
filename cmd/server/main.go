@@ -32,6 +32,12 @@ func main() {
 	}
 	config.BindPFlags(pflag.CommandLine)
 
+	// init logger
+	loggerGroup, err := grpchelper.NewLoggerGroup(config.Sub("logger"))
+	if err != nil {
+		panic(err)
+	}
+
 	// register service to consul
 	register := grpchelper.NewConsulRegister()
 	config.Sub("register").Unmarshal(register)
@@ -42,8 +48,8 @@ func main() {
 
 	// create server
 	server := grpc.NewServer()
-	addapi.RegisterServiceServer(server, &add.Service{})
-	echoapi.RegisterServiceServer(server, &echo.Service{})
+	addapi.RegisterServiceServer(server, add.NewService(nil, loggerGroup.GetLoggerWithoutError("log")))
+	echoapi.RegisterServiceServer(server, echo.NewService(nil, loggerGroup.GetLoggerWithoutError("log")))
 	grpc_health_v1.RegisterHealthServer(server, &health.Service{})
 
 	address, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%v", *port))
