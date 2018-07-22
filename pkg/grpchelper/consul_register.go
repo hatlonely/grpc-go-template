@@ -3,6 +3,7 @@ package grpchelper
 import (
 	"fmt"
 	"net"
+	"strconv"
 	"time"
 
 	"github.com/hashicorp/consul/api"
@@ -11,10 +12,11 @@ import (
 // NewConsulRegister create a new consul register
 func NewConsulRegister() *ConsulRegister {
 	return &ConsulRegister{
-		Address: "127.0.0.1:8500",
-		Service: "unknown",
-		Tag:     []string{},
-		Port:    3000,
+		Address:                        "127.0.0.1:8500",
+		Service:                        "unknown",
+		Tag:                            []string{},
+		Port:                           3000,
+		BalanceFactor:                  100,
 		DeregisterCriticalServiceAfter: time.Duration(1) * time.Minute,
 		Interval:                       time.Duration(10) * time.Second,
 	}
@@ -26,6 +28,7 @@ type ConsulRegister struct {
 	Service                        string
 	Tag                            []string
 	Port                           int
+	BalanceFactor                  int
 	DeregisterCriticalServiceAfter time.Duration
 	Interval                       time.Duration
 }
@@ -47,6 +50,9 @@ func (r *ConsulRegister) Register() error {
 		Tags:    r.Tag,                                          // tag，可以为空
 		Port:    r.Port,                                         // 服务端口
 		Address: IP,                                             // 服务 IP
+		Meta: map[string]string{
+			"balanceFactor": strconv.Itoa(r.BalanceFactor),
+		},
 		Check: &api.AgentServiceCheck{ // 健康检查
 			Interval: r.Interval.String(),                            // 健康检查间隔
 			GRPC:     fmt.Sprintf("%v:%v/%v", IP, r.Port, r.Service), // grpc 支持，执行健康检查的地址，service 会传到 Health.Check 函数中
